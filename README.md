@@ -2,6 +2,10 @@
 
 使用 Three.js 直接载入 Rhino `.3dm`，按真实单位还原已有几何。项目源码、模型文件和部署流程均可继续编辑。
 
+在线查看：https://dongfeng19830925-stack.github.io/laser-space/
+
+源码仓库：https://github.com/dongfeng19830925-stack/laser-space
+
 ## 本地运行
 
 需要 Node.js 22.12 或以上。
