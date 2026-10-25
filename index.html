@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#11151b" />
+  <meta name="description" content="融空间激光空间真实尺寸三维模型，支持 Rhino 模型更新、图层查看与空间漫游。" />
+  <title>激光空间 · 三维工作台</title>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="激光空间主页"><span class="brand-mark">L</span><span>激光空间<small>三维工作台</small></span></a>
+    <div class="model-title"><span class="status-dot"></span><span id="model-name">正在读取模型</span><span class="tag">1∶1</span></div>
+    <div class="header-actions">
+      <label class="button secondary" for="model-file">打开新版模型</label>
+      <input type="file" id="model-file" accept=".3dm" hidden />
+      <button id="export-settings" class="button">保存查看配置</button>
+    </div>
+  </header>
+  <main class="workspace">
+    <aside class="sidebar">
+      <div class="section-heading"><span>模型图层</span><span id="layer-count" class="muted">—</span></div>
+      <div class="presets" aria-label="显示方案">
+        <button data-preset="space" class="preset active" aria-pressed="true">空间</button>
+        <button data-preset="structure" class="preset" aria-pressed="false">结构</button>
+        <button data-preset="plan" class="preset" aria-pressed="false">布置</button>
+        <button data-preset="all" class="preset" aria-pressed="false">全部</button>
+      </div>
+      <div id="layer-list" class="layer-list"></div>
+      <div class="sidebar-bottom">
+        <div class="section-heading">查看设置</div>
+        <label class="setting"><span>墙体半透明</span><input type="checkbox" id="transparent" checked /></label>
+        <label class="setting"><span>轮廓线</span><input type="checkbox" id="edges" checked /></label>
+        <label class="setting"><span>米制网格</span><input type="checkbox" id="grid" checked /></label>
+        <label class="setting"><span>模型原色</span><input type="checkbox" id="original-colors" /></label>
+        <details class="update-help"><summary>如何更新模型</summary><p>在犀牛中继续修改，保留图层与物体名称。点击“打开新版模型”仅在本机预览；替换仓库里的 public/models/space.3dm 并提交后，线上模型会随部署更新。</p><p>“保存查看配置”下载当前显隐与视角，供后续编辑使用。</p></details>
+      </div>
+    </aside>
+    <section class="stage" aria-label="三维模型查看区">
+      <div id="viewport"></div>
+      <div class="view-toolbar" aria-label="模型视角">
+        <button class="view active" data-view="perspective" aria-pressed="true">透视</button>
+        <button class="view" data-view="top" aria-pressed="false">俯视</button>
+        <button class="view" data-view="front" aria-pressed="false">侧视</button>
+        <span class="toolbar-divider"></span>
+        <button class="view" id="fit-view">适配模型</button>
+        <button class="view" id="walk">进入空间</button>
+      </div>
+      <div class="axis-label" aria-hidden="true"><span>X</span><span>Y</span><span>Z ↑</span></div>
+      <div class="stage-footer"><span id="interaction-hint">左键旋转 · 右键平移 · 滚轮缩放 · 点击选择</span><span>场景单位 m</span></div>
+      <div class="loading" id="loading" role="status"><div class="spinner"></div><span id="loading-text">正在读取犀牛模型…</span></div>
+      <div id="error" role="alert" hidden></div>
+    </section>
+    <aside class="inspector">
+      <div class="section-heading">模型信息<span class="tag">RHINO</span></div>
+      <dl class="model-stats"><div><dt>源文件单位</dt><dd id="source-units">—</dd></div><div><dt>三维实体</dt><dd id="mesh-count">—</dd></div><div><dt>模型图层</dt><dd id="info-layer-count">—</dd></div></dl>
+      <div class="separator"></div>
+      <div class="section-heading">物体信息</div>
+      <div id="selection" aria-live="polite"><div class="empty-icon">⌖</div><p class="empty-text">点击模型中的物体<br />查看图层、尺寸与高度</p></div>
+      <div class="inspector-note"><span class="note-dot"></span><p>当前显示已提供的空间与设备箱模型。激光器和光束效果待后续模型更新。</p></div>
+    </aside>
+  </main>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
