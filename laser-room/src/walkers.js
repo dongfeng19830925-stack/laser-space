@@ -19,7 +19,7 @@ export function createWalkers(scene,layout){
   let mode='zones',walking=true;
   const random=(lo,hi)=>lo+Math.random()*(hi-lo),active=()=>people.filter(p=>p.root.visible);
   function choose(p){p.goalY=midY+random(-.7,.7);p.targetSpeed=random(.65,1.25);p.decision=random(1.5,3.5);p.pause=Math.random()<.2?random(.3,1.3):0;}
-  function reset(nextMode=mode){mode=nextMode;people.forEach((p,i)=>{p.root.visible=mode==='free'||i<3;p.distance=mode==='zones'?i*zoneLength+random(.6,zoneLength-.6):random(.4,travel-.4);p.y=midY+random(-.6,.6);p.sign=1;p.speed=random(.7,1.1);p.phase=random(0,6.28);choose(p);});walking=true;sync();}
+  function reset(nextMode=mode){mode=nextMode;people.forEach((p,i)=>{p.root.visible=mode==='single'?i===0:mode==='free'||i<3;p.distance=mode==='zones'?i*zoneLength+random(.6,zoneLength-.6):random(.4,travel-.4);p.y=midY+random(-.6,.6);p.sign=1;p.speed=random(.7,1.1);p.phase=0;choose(p);});walking=true;update(0);}
   function sync(){for(const p of active()){p.root.position.set(entry+direction*p.distance,p.y,layout.floorZ);p.root.rotation.z=(direction*p.sign<0?Math.PI:0)+Math.PI/2;p.root.updateWorldMatrix(true,true);}}
   function update(dt){for(const [i,p]of people.entries()){
     if(!p.root.visible)continue;let moved=0;

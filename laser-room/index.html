@@ -20,11 +20,22 @@
 <label class="toggle"><input id="coverage" type="checkbox">总览显示相机覆盖范围</label>
 <div id="camera-buttons" class="camera-buttons" aria-label="选择实际机位"></div><p id="camera-position"></p>
 <label>监看预演刷新<select id="feed-fps"><option value="8">8fps</option><option value="15">15fps</option><option value="4">4fps（对照）</option></select></label><p>原机位坐标固定；视场和俯角为理想投影。不是硬件相机设置。</p></section>
-<section><div class="panel-title">人体遮挡预演</div><label>行走方式<select id="player-mode"><option value="zones">3区单人试验 · 每区1人</option><option value="free">4人自由行走 · 压力对照</option></select></label>
+<section><div class="panel-title">人体遮挡预演</div><label>行走方式<select id="player-mode"><option value="zones">3区单人试验 · 每区1人</option><option value="single">全空间仅1名玩家</option><option value="free">4人自由行走 · 压力对照</option></select></label>
 <div class="walker-actions"><button id="walk-toggle">暂停行走</button><button id="walk-reset">重新开始</button></div><label>P1距首列位置 <output id="walk-position">—</output><input id="walk-progress" type="range" min="-0.5" max="10.4" step="0.01" value="0"></label>
 <button id="inspect-941">P1定位9.41m（越区调试）</button><p id="phase-note">每名行人在自己的区域内独立移动。</p><p>简化人形身高180cm。光路遮挡驱动点位熄灭；视线遮挡保留实体深度。</p><p id="contact-status" role="status"></p></section>
 </div></details></aside>
+<section id="signal-monitor" class="fusion-panel" aria-label="地面与墙面合成监视器" hidden>
+<div class="fusion-heading"><div><div class="eyebrow">SIGNAL MONITOR / 144 POINTS</div><h2>激光接收点 · 合成监视器</h2><p>地面72点 + 墙面72点 · 按模型位置排列 · 两图均为入口在左、出口在右</p></div><span id="fusion-alarm-count" class="fusion-badge" role="status">等待采样</span></div>
+<div class="fusion-toolbar"><label>玩家<select id="monitor-player-mode"><option value="zones">3区各1人</option><option value="single">全空间仅1人</option><option value="free">4人自由行走</option></select></label><button id="monitor-walk-toggle">暂停行走</button><label>灯光<select id="monitor-light-mode"><option value="red">红光</option><option value="green">切换绿光</option></select></label><a id="open-monitor" href="./?monitor=1" target="_blank" rel="noopener">单独打开大监视器 ↗</a></div>
+<p id="fusion-connection" class="fusion-connection" role="status">当前模拟 · 地面固定采用现有6台，墙面采用3台；调整对应机位方案会更新此图。</p>
+<div class="fusion-legend"><span><i class="legend-dot"></i>地面：朝出口机位可见</span><span><i class="legend-ring"></i>地面：朝入口机位可见 / 墙面：可见</span><span><i class="legend-alarm"></i>红点：报警</span><span><i class="legend-uncovered"></i>蓝点：墙面顶排未覆盖</span></div>
+<div class="fusion-dual">
+<section class="fusion-area"><div class="fusion-area-heading"><h3>地面 · 平面俯视</h3><span id="fusion-floor-count">等待采样</span></div><p>6台实际机位 · 白点与白圈均消失才报警</p><div class="fusion-map-wrap"><svg id="fusion-floor-map" role="img" aria-label="72个地面接收点与6台相机的实际平面位置"></svg></div><div id="fusion-floor-zones" class="fusion-zones"></div></section>
+<section class="fusion-area"><div class="fusion-area-heading"><h3>墙面 · 展开立面</h3><span id="fusion-wall-count">等待采样</span></div><p>3台实际机位 · 白圈消失即报警 · 顶排未拍到则蓝点</p><div class="fusion-map-wrap"><svg id="fusion-wall-map" role="img" aria-label="72个墙面接收点与3台相机的实际立面位置"></svg></div><div id="fusion-wall-zones" class="fusion-zones"></div></section>
+</div><p id="fusion-status" class="fusion-status"></p>
+<p class="fusion-note">地面单侧可见不报警；墙面没有重叠视角。蓝点仅用于未覆盖的墙面顶排，不计入报警；其他点位因固定遮挡或视场不足不可见时仍显示红色。切绿光同样触发报警，暂不区分断光与视线遮挡。当前为几何模拟，尚未接入真实视频；三角标记为模型机位投影。</p>
+</section>
 <section id="camera-rail" aria-label="实际机位同步监看"><div class="rail-heading">CAM / 实际机位 <span id="camera-count">—</span></div><div id="camera-monitors"></div></section>
-<footer><nav aria-label="场景视角"><button data-view="overview" class="active">空间总览</button><button data-view="front">入口向内</button><button data-view="inside">进入空间</button><button data-view="top">俯视布局</button></nav><p>拖动旋转 · 滚轮缩放 · 右键平移</p></footer>
+<footer><nav aria-label="场景视角"><button data-view="monitor">平面合成监视器</button><button data-view="overview" class="active">空间总览</button><button data-view="front">入口向内</button><button data-view="inside">进入空间</button><button data-view="top">俯视布局</button></nav><p>拖动旋转 · 滚轮缩放 · 右键平移</p></footer>
 <div id="status" role="status">正在校验模型与机位…</div><div id="loading" role="status">正在读取完整 v2.0 模型…</div><div id="error" role="alert" hidden></div>
 <script type="module" src="./src/main.js"></script></body></html>

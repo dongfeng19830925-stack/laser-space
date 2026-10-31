@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "node --test",
     "dev": "node scripts/prepare-model.mjs && node scripts/generate-scene-layout.mjs && node scripts/copy-rhino.mjs && vite --host 127.0.0.1",
     "build": "node scripts/prepare-model.mjs && node scripts/generate-scene-layout.mjs && node scripts/copy-rhino.mjs && vite build",
     "model:prepare": "node scripts/prepare-model.mjs",
