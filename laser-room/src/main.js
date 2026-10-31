@@ -1,184 +1,179 @@
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
-const scene=new THREE.Scene();scene.background=new THREE.Color('#080d13');scene.fog=new THREE.FogExp2('#080d13',.018);
-const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.03,150);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;document.querySelector('#viewport').appendChild(renderer.domElement);
-const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.minDistance=.3;controls.maxDistance=40;controls.maxPolarAngle=Math.PI*.98;
-scene.add(new THREE.HemisphereLight(0xaccfe5,0x162030,2.7));const light=new THREE.DirectionalLight(0xd1f4ff,4);light.position.set(4,10,0);scene.add(light);
-const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,23),new THREE.MeshStandardMaterial({color:0x111d29,roughness:.65,metalness:.35}));floor.rotation.x=-Math.PI/2;floor.position.set(0,-.13,4.95);scene.add(floor);
-const grid=new THREE.GridHelper(22,44,0x34505b,0x1c2c39);grid.position.set(0,-.12,4.95);scene.add(grid);
-// Opaque side panels: receiver faces remain inside the room.
-const sideWalls=new THREE.Group();scene.add(sideWalls);
-const wallMaterial=new THREE.MeshStandardMaterial({color:0x263542,roughness:.9,side:THREE.DoubleSide});
-for(const side of [-1,1]){const wall=new THREE.Mesh(new THREE.BoxGeometry(.06,2.94,10.1),wallMaterial);wall.position.set(side*1.49,1.4,4.95);sideWalls.add(wall);}
-const frameMat=new THREE.MeshStandardMaterial({color:0x3a4d5d,metalness:.75,roughness:.32});const emitterMat=new THREE.MeshStandardMaterial({color:0x71f6d4,emissive:0x31bb94,emissiveIntensity:1.5});const receiverMat=new THREE.MeshBasicMaterial({color:0xd6ffe0});const receiverOffMat=new THREE.MeshBasicMaterial({color:0x030506});const filterDarkMat=new THREE.MeshBasicMaterial({color:0x010203});
-const beamMat=new THREE.MeshBasicMaterial({color:0x6dffce,transparent:true,opacity:.88,depthWrite:false});const glowMat=new THREE.MeshBasicMaterial({color:0x32e8b3,transparent:true,opacity:.055,depthWrite:false,blending:THREE.AdditiveBlending});
-const cyl=new THREE.CylinderGeometry(.004,.004,2.8,6),glow=new THREE.CylinderGeometry(.019,.019,2.8,6),emit=new THREE.SphereGeometry(.025,10,8),receive=new THREE.BoxGeometry(.052,.052,.035);
-const frames=[],beams=[],receivers=Array.from({length:12},()=>[]);
-function box(group,w,h,d,x,y,z){const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),frameMat);mesh.position.set(x,y,z);group.add(mesh);}
-function label(text){const c=document.createElement('canvas');c.width=256;c.height=64;const ctx=c.getContext('2d');ctx.fillStyle='#a7bccb';ctx.font='28px sans-serif';ctx.textAlign='center';ctx.fillText(text,128,42);const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));sp.scale.set(1.2,.3,1);return sp;}
-for(let n=0;n<12;n++){const z=n*.9,fg=new THREE.Group(),bg=new THREE.Group();scene.add(fg,bg);frames.push(fg);beams.push(bg);box(fg,.07,2.94,.07,-1.435,1.4,z);box(fg,.07,2.94,.07,1.435,1.4,z);box(fg,2.8,.07,.07,0,2.835,z);box(fg,2.8,.07,.07,0,-.035,z);
-for(let i=1;i<=6;i++){const v=i*.4;for(let direction=0;direction<2;direction++){const vertical=direction===0;for(const [geo,mat] of [[cyl,beamMat],[glow,glowMat]]){const beam=new THREE.Mesh(geo,mat);beam.position.set(vertical?v-1.4:0,vertical?1.4:v,z);if(!vertical)beam.rotation.z=Math.PI/2;bg.add(beam);}const a=new THREE.Mesh(emit,emitterMat),b=new THREE.Mesh(receive,receiverMat);if(vertical){a.position.set(v-1.4,2.8,z);b.position.set(v-1.4,0,z);b.rotation.x=Math.PI/2;}else{a.position.set(1.4,v,z);b.position.set(-1.4,v,z);b.rotation.y=Math.PI/2;}b.userData.receiver=true;receivers[n].push(b);fg.add(a,b);}}
-const number=label(String(n+1).padStart(2,'0'));number.position.set(-1.9,.1,z);scene.add(number);}
-for(const [txt,pos] of [['2.8 m',[0,3.2,0]],['9.9 m',[2.05,.1,4.95]],['入口',[0,.02,-.9]],['出口',[0,.02,10.8]]]){const s=label(txt);s.position.set(...pos);scene.add(s);}
-// Horizontal FOV is configurable; camera remains landscape while its physical orientation is rotated 90 degrees.
-const sensorAspect=16/9, cameraBodies=new THREE.Group(), coverageGroup=new THREE.Group();
-scene.add(cameraBodies,coverageGroup);
-const securityCameras=Array.from({length:6},(_,i)=>{
- const z=1.35+(i%3)*3.6;
- const c=new THREE.PerspectiveCamera(36,sensorAspect,.06,3.0);
- c.position.set(0,2.8,z);c.up.set(-1,0,0);c.lookAt(0,0,z);c.updateMatrixWorld();
- const body=new THREE.Mesh(new THREE.BoxGeometry(.24,.08,.09),new THREE.MeshStandardMaterial({color:0x647587,metalness:.5,roughness:.4}));body.position.set(0,2.86,z);body.rotation.y=Math.PI/2;cameraBodies.add(body);
- const lens=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.05,16),new THREE.MeshStandardMaterial({color:0x388bb3,emissive:0x183c56}));lens.position.set(0,2.795,z);cameraBodies.add(lens);
- const tag=label('CAM 0'+(i+1));tag.position.set(0,3.2,z);cameraBodies.add(tag);
- return c;
-});
-let activeCamera=-1,horizontalFov=90,cameraLayout='cross';
-function cameraInfo(){const width=2*2.8*Math.tan(THREE.MathUtils.degToRad(horizontalFov/2)),depth=width/sensorAspect;
- document.querySelector('#coverage-value').hidden=cameraLayout!=='top';document.querySelector('#coverage-value').textContent=`地面覆盖约 ${depth.toFixed(2)} × ${width.toFixed(2)}m；每4列跨度2.70m`;
- window.__LASER_ROOM_CAMERAS__={activeCamera,horizontalFov,aspect:sensorAspect,rollDegrees:cameraLayout==='top'?90:0,layout:cameraLayout,mounts:securityCameras.map(c=>c.position.toArray()),floorCoverage:cameraLayout==='top'?[depth,width]:null};
-}
-function updateFov(){horizontalFov=Number(document.querySelector('#camera-fov').value);document.querySelector('#fov-value').textContent=horizontalFov+'°';
- for(const child of [...coverageGroup.children]){coverageGroup.remove(child);child.geometry?.dispose();child.material?.dispose();}
- for(const [index,c] of securityCameras.entries()){c.fov=THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(horizontalFov/2))/sensorAspect));c.updateProjectionMatrix();
- if(cameraLayout==='top'&&index>=3)continue;const helper=new THREE.CameraHelper(c);helper.setColors(0xf6b95c,0xf6b95c,0xf6b95c,0x758995,0x758995);coverageGroup.add(helper);}
- cameraInfo();
-}
-document.querySelector('#camera-fov').oninput=updateFov;
-document.querySelector('#coverage').onchange=e=>{coverageGroup.visible=activeCamera<0&&e.target.checked;};
-document.querySelectorAll('[data-camera]').forEach(b=>b.onclick=()=>{
- activeCamera=Number(b.dataset.camera);controls.enabled=false;cameraBodies.visible=false;coverageGroup.visible=false;
- document.querySelectorAll('[data-view]').forEach(x=>x.classList.remove('active'));
- document.querySelectorAll('[data-camera]').forEach(x=>x.classList.toggle('active',x===b));
- document.querySelector('#status').textContent=`● CAM 0${activeCamera+1} · ${cameraLayout==='top'?'顶部向下':'左右相向斜拍'} · 16:9`;
- cameraInfo();
-});
-updateFov();
-const poses={overview:[[9,7,-9],[0,1,4.1]],front:[[0,1.4,-6],[0,1.4,0]],inside:[[0,1.45,-.9],[0,1.4,9.9]],top:[[0,17,4.95],[0,0,4.95]]};
-function view(name){activeCamera=-1;controls.enabled=true;cameraBodies.visible=true;coverageGroup.visible=document.querySelector('#coverage').checked;document.querySelectorAll('[data-camera]').forEach(b=>b.classList.remove('active'));document.querySelector('#status').textContent='● 模拟就绪 · 真实比例 1:1';cameraInfo();const [p,t]=poses[name];camera.position.set(...p);controls.target.set(...t);controls.update();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name));}
-document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>view(b.dataset.view));
-const laserToggle=document.querySelector('#beams'),frameToggle=document.querySelector('#shell'),layer=document.querySelector('#layer');
-function update(){const selected=Number(layer.value);frames.forEach((f,i)=>{f.visible=frameToggle.checked&&(!selected||i===selected-1);beams[i].visible=laserToggle.checked&&(!selected||i===selected-1);});document.querySelector('#layer-value').textContent=selected?`第${selected}框`:'全部12框';}
-laserToggle.onchange=frameToggle.onchange=layer.oninput=update;update();
-view('overview');
-const viewport=document.querySelector('#viewport');
-const feedRenderers=securityCameras.map((c,i)=>{const r=new THREE.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(devicePixelRatio,1.5));r.outputColorSpace=renderer.outputColorSpace;r.toneMapping=renderer.toneMapping;document.querySelector('#feed-'+i).appendChild(r.domElement);return r;});
-function resizeViews(){camera.aspect=viewport.clientWidth/viewport.clientHeight;camera.updateProjectionMatrix();renderer.setSize(viewport.clientWidth,viewport.clientHeight);feedRenderers.forEach((r,i)=>{const el=document.querySelector('#feed-'+i);r.setSize(el.clientWidth,el.clientWidth/sensorAspect);});}
-new ResizeObserver(resizeViews).observe(viewport);resizeViews();
-function setLayout(){
- cameraLayout=document.querySelector('#camera-layout').value;
- securityCameras.forEach((c,i)=>{const group=i%3,center=1.35+group*3.6;
- if(cameraLayout==='top'){c.position.set(0,2.8,center);c.up.set(-1,0,0);c.lookAt(0,0,center);c.far=3;}
- else{const side=i<3?1:-1;c.position.set(side*1.28,2.5,center-side*1.2);c.up.set(0,1,0);c.lookAt(0,1,center);c.far=8;}
- c.updateProjectionMatrix();c.updateMatrixWorld();
- const body=cameraBodies.children[i*3],lens=cameraBodies.children[i*3+1],tag=cameraBodies.children[i*3+2];
- body.position.copy(c.position).add(new THREE.Vector3(0,.06,0));body.quaternion.copy(c.quaternion);lens.position.copy(c.position);lens.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),c.getWorldDirection(new THREE.Vector3()));tag.position.copy(c.position).add(new THREE.Vector3(0,.32,0));body.visible=lens.visible=tag.visible=cameraLayout!=='top'||i<3;
- document.querySelector('#feed-'+i).closest('.monitor').hidden=cameraLayout==='top'&&i>=3;
- document.querySelector('[data-camera="'+i+'"]').hidden=cameraLayout==='top'&&i>=3;
- const text=cameraLayout==='top'?`第${group*4+1}–${group*4+4}列 · 顶拍`:`第${group*4+1}–${group*4+4}列 · ${i<3?'入口左侧':'入口右侧'}斜拍`;
- document.querySelector('[data-expand-camera="'+i+'"] span').textContent=text;
- });
- document.querySelector('#layout-note').textContent=cameraLayout==='top'?'原机位：高2.8m，每4列中心朝下。':'试验机位：左右封板内侧（距中线1.28m），高2.5m；纵深错开±1.2m，相向看本组中心高1m。封板不透视。';
- document.querySelector('.rail-heading span').textContent=cameraLayout==='top'?'原3台顶拍':'6台相向斜拍';
- document.querySelector('#camera-rail').classList.toggle('six-cameras',cameraLayout==='cross');
- updateFov();resizeViews();view('overview');
-}
-document.querySelector('#camera-layout').onchange=setLayout;
-document.querySelectorAll('[data-expand-camera]').forEach(b=>b.onclick=()=>document.querySelector('[data-camera="'+b.dataset.expandCamera+'"]').click());
+import {Rhino3dmLoader} from 'three/addons/loaders/3DMLoader.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {lensFov,fitCamera} from '../../src/camera-fit.js';
+import {createWalkers} from './walkers.js';
 
-// A 1.80 m articulated mannequin; walking is a visual simulation, not hardware input.
-const person=new THREE.Group();scene.add(person);
-const shirt=new THREE.MeshStandardMaterial({color:0xffa650,roughness:.7});
-const trousers=new THREE.MeshStandardMaterial({color:0x365a7d,roughness:.85});
-const skin=new THREE.MeshStandardMaterial({color:0xe9b18b,roughness:.8});
-const shoes=new THREE.MeshStandardMaterial({color:0x202b38,roughness:.8});
-function part(geometry,material,parent,x,y,z){const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);parent.add(m);return m;}
-part(new THREE.SphereGeometry(.135,20,16),skin,person,0,1.665,0);
-part(new THREE.CylinderGeometry(.063,.068,.10,12),skin,person,0,1.51,0);
-part(new THREE.CylinderGeometry(.23,.17,.50,16),shirt,person,0,1.245,0).scale.z=.63;
-part(new THREE.BoxGeometry(.32,.17,.21),trousers,person,0,.94,0);
-const legs=[],arms=[];
-for(const side of [-1,1]){
- const leg=new THREE.Group();leg.position.set(side*.095,.89,0);person.add(leg);legs.push(leg);
- part(new THREE.CylinderGeometry(.075,.055,.79,12),trousers,leg,0,-.395,0);
- part(new THREE.BoxGeometry(.12,.10,.25),shoes,leg,0,-.84,.055);
- const arm=new THREE.Group();arm.position.set(side*.24,1.43,0);person.add(arm);arms.push(arm);
- part(new THREE.CylinderGeometry(.067,.055,.27,12),shirt,arm,0,-.12,0);
- part(new THREE.CylinderGeometry(.05,.04,.29,12),skin,arm,0,-.39,0);
- part(new THREE.SphereGeometry(.047,10,8),skin,arm,0,-.555,0);
+const $=id=>document.getElementById(id),base=new URL('../',document.baseURI),viewport=$('viewport');
+const scene=new THREE.Scene(),normalBackground=new THREE.Color(0x0b141c),blackBackground=new THREE.Color(0x010203);scene.background=normalBackground;
+const camera=new THREE.PerspectiveCamera(45,1,.01,150);camera.up.set(0,0,1);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;viewport.append(renderer.domElement);
+const feedRenderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});feedRenderer.setPixelRatio(1);feedRenderer.outputColorSpace=renderer.outputColorSpace;feedRenderer.toneMapping=renderer.toneMapping;
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.minDistance=.2;controls.maxDistance=150;
+scene.add(new THREE.HemisphereLight(0xc2dcec,0x253b32,2.5));const light=new THREE.DirectionalLight(0xfff2df,3);light.position.set(4,-3,12);scene.add(light);
+const coverageGroup=new THREE.Group(),labelGroup=new THREE.Group(),occlusionRoot=new THREE.Group(),dotGroup=new THREE.Group();scene.add(coverageGroup,labelGroup,occlusionRoot,dotGroup);occlusionRoot.visible=false;
+const darkMaterial=new THREE.MeshBasicMaterial({color:0x010203,side:THREE.DoubleSide}),whiteMaterial=new THREE.MeshBasicMaterial({color:0xeaffea,side:THREE.DoubleSide,toneMapped:false}),redMaterial=new THREE.MeshBasicMaterial({color:0xff493d,side:THREE.DoubleSide,toneMapped:false}),greenMaterial=new THREE.MeshBasicMaterial({color:0x68ff8b,side:THREE.DoubleSide,toneMapped:false});
+const ray=new THREE.Raycaster(),rayOrigin=new THREE.Vector3(),rayDirection=new THREE.Vector3();
+let model,layout,plan,walkers,grid,modelBounds,items=[],wallItems=[],cameraNodes=[],sourcePaths=[],cameraEntries=[],activeCamera=-1,lastTime=performance.now(),lastSignal=-Infinity,lastFeeds=-Infinity,lastRender=-Infinity;
+const beamStates=new Map(),dotEntries=[],sourceById=new Map(),labels=[];
+const compact=matchMedia('(max-width:760px)');
+$('controls-details').open=!compact.matches;compact.addEventListener('change',e=>{$('controls-details').open=!e.matches;});
+function fail(error){$('loading').hidden=true;$('error').hidden=false;$('error').textContent='场景加载失败：'+error.message;console.error(error);}
+function label(text){const canvas=document.createElement('canvas');canvas.width=256;canvas.height=64;const ctx=canvas.getContext('2d');ctx.font='28px sans-serif';ctx.fillStyle='#bcf5df';ctx.textAlign='center';ctx.fillText(text,128,44);const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(canvas),depthTest:false,transparent:true}));sprite.scale.set(.65,.16,1);return sprite;}
+function sourceLayer(object,layers){let node=object;while(node&&node!==model){const index=node.userData.attributes?.layerIndex;if(index!==undefined)return layers[index]?.path||'';node=node.parent;}return '';}
+function resize(){const w=Math.max(1,viewport.clientWidth),h=Math.max(1,viewport.clientHeight);renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe(viewport);resize();
+
+function preparePhysicalScene(){
+  const raw=model.userData.layers||[],map=new Map(raw.map(l=>[l.id,l])),layers=raw.map(l=>{const names=[l.name],seen=new Set([l.id]);let p=map.get(l.parentLayerId);while(p&&!seen.has(p.id)){seen.add(p.id);names.unshift(p.name);p=map.get(p.parentLayerId);}return{path:names.join('::')};});
+  const markerIds=new Set([...plan.floor,...plan.wall].map(c=>c.objectId)),pathIds=new Set(layout.beams.map(b=>b.id));
+  const indexed=[],plain=[];modelBounds=new THREE.Box3();
+  model.traverse(object=>{
+    if(!object.isMesh){if(object.isSprite||object.isLine||object.isPoints)object.visible=false;return;}
+    const layer=sourceLayer(object,layers);object.userData.layerPath=layer;items.push(object);
+    if(object.userData.attributes?.id)sourceById.set(object.userData.attributes.id,object);
+    object.material=Array.isArray(object.material)?object.material.map(m=>m.clone()):object.material.clone();
+    const materials=Array.isArray(object.material)?object.material:[object.material];for(const m of materials){m.side=THREE.DoubleSide;if(m.roughness!==undefined)m.roughness=.8;}
+    if(/土建|墙面|石膏板|涂料/.test(layer)&&!layer.includes('反光板'))wallItems.push(object);
+    object.geometry.computeBoundingBox();modelBounds.union(object.geometry.boundingBox.clone().applyMatrix4(object.matrixWorld));
+    if(markerIds.has(object.userData.attributes?.id)){cameraNodes.push(object);return;}
+    if(pathIds.has(object.userData.attributes?.id)){sourcePaths.push(object);return;}
+    // One merged depth occluder per index format, shared by all monitor views.
+    const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',object.geometry.attributes.position.clone());
+    if(object.geometry.index)geometry.setIndex(object.geometry.index.clone());geometry.applyMatrix4(object.matrixWorld);
+    (geometry.index?indexed:plain).push(geometry);
+  });
+  for(const list of [indexed,plain])if(list.length){const merged=mergeGeometries(list,false);if(!merged)throw new Error('Cannot prepare physical depth geometry');occlusionRoot.add(new THREE.Mesh(merged,darkMaterial));list.forEach(g=>g.dispose());}
+  grid=new THREE.GridHelper(24,48,0x426a70,0x203940);grid.rotation.x=Math.PI/2;grid.position.set(modelBounds.getCenter(new THREE.Vector3()).x,walkers.midY,layout.floorZ-.01);scene.add(grid);
+  const receivers=new Map(layout.receivers.map(r=>[r.id,r]));
+  for(const beam of layout.beams){
+    const receiver=receivers.get(beam.receiverId),mesh=new THREE.Mesh(new THREE.CircleGeometry(.025,16),beam.color==='red'?redMaterial:greenMaterial);mesh.position.fromArray(beam.spot);if(beam.kind==='wall')mesh.rotation.x=Math.PI/2;mesh.userData.signal=true;dotGroup.add(mesh);dotEntries.push({beam,receiver,mesh});beamStates.set(beam.id,{blocked:false,people:[]});
+  }
+  for(const c of [...plan.floor,...plan.wall]){const sprite=label(c.id);sprite.position.fromArray(c.position);sprite.position.z+=.14;labelGroup.add(sprite);labels.push({sprite,c});}
 }
-// Two abreast, two rows; IDs and shirt colors stay consistent in every camera.
-const colors=[0xffa650,0x6bd5f5,0xd69bf5,0x97de7b];
-const people=Array.from({length:4},(_,i)=>{
- const root=person.clone(true);scene.add(root);
- const outfit=shirt.clone();outfit.color.setHex(colors[i]);const colliders=[];
- root.traverse(node=>{if(node.isMesh){if(node.material===shirt)node.material=outfit;colliders.push(node);}});
- const tag=label('P'+(i+1));tag.position.set(0,2.02,0);tag.scale.set(.5,.125,1);root.add(tag);
- return {id:'P'+(i+1),root,x:i%2===0?-.65:.65,lag:i<2?0:1.2,legs:[root.children[4],root.children[6]],arms:[root.children[5],root.children[7]],colliders};
+function updateVisibility(){
+  if(!layout)return;const row=Number($('layer').value),color=$('light-mode').value;
+  $('layer-value').textContent=row?'第'+row+'列':'全部'+layout.rows.length+'列';
+  for(const entry of dotEntries){const state=beamStates.get(entry.beam.id);entry.mesh.visible=(!row||entry.beam.row===row)&&entry.beam.color===color&&!state.blocked;entry.mesh.material=entry.beam.color==='red'?redMaterial:greenMaterial;}
+  const pathMap=new Map(layout.beams.map(b=>[b.id,b]));
+  for(const object of sourcePaths){const beam=pathMap.get(object.userData.attributes.id);object.visible=$('beams').checked&&beam.color===color&&(!row||beam.row===row);}
+  const future=$('camera-layout').value==='future',futureIds=new Set(plan.floor.filter(c=>!c.installed).map(c=>c.objectId));
+  for(const node of cameraNodes)node.visible=future||!futureIds.has(node.userData.attributes.id);
+  for(const {sprite,c}of labels)sprite.visible=c.installed!==false||future;
+}
+function updateWalkStatus(){
+  const info=walkers.info();$('walk-toggle').textContent=info.walking?'暂停行走':'继续行走';$('walk-progress').value=String(info.p1);$('walk-position').textContent=info.p1.toFixed(2)+'m';
+  $('phase-note').textContent=info.violation?'手动定位已越区；当前不满足每区最多1人的试验条件。':info.mode==='zones'?'3区单人试验：每人仅在自己的区域内独立变速、停顿和往返。':'4人自由行走压力对照，不作为3区单人阶段验收。';
+  window.__LASER_ROOM_WALKER__=info;
+}
+function inspectContact(force=false){
+  if(!layout)return;const now=performance.now();if(!force&&now-lastSignal<100)return;lastSignal=now;
+  const contacts=[];
+  for(const beam of layout.beams){
+    rayOrigin.fromArray(beam.start);rayDirection.fromArray(beam.spot).sub(rayOrigin);const length=rayDirection.length();rayDirection.normalize();ray.set(rayOrigin,rayDirection);ray.near=.002;ray.far=length-.002;
+    const people=walkers.active().filter(p=>Math.abs(p.root.position.x-beam.end[0])<.65&&ray.intersectObjects(p.colliders,false).length).map(p=>p.id);
+    beamStates.set(beam.id,{blocked:people.length>0,people});if(people.length&&beam.color==='red')contacts.push({frame:beam.row,beam:beam.slot,direction:beam.kind,people});
+  }
+  updateVisibility();updateWalkStatus();
+  const redOn=$('light-mode').value==='red',floorCount=layout.receivers.filter(r=>r.kind==='floor').length,wallCount=layout.receivers.filter(r=>r.kind==='wall').length,floorOff=redOn?contacts.filter(c=>c.direction==='floor').length:floorCount,wallOff=redOn?contacts.filter(c=>c.direction==='wall').length:wallCount;
+  $('collision-summary').textContent='几何状态 · 地面红点 '+(floorCount-floorOff)+'/'+floorCount+' · 墙面红点 '+(wallCount-wallOff)+'/'+wallCount+' · 非实测';
+  $('contact-status').textContent=!redOn?'当前模拟绿光：红色滤光视图中红点熄灭，按当前策略报警。':contacts.length?'红光光路遮挡：'+contacts.slice(0,8).map(c=>c.people.join('/')+' 第'+c.frame+'列'+(c.direction==='floor'?'地面':'墙面')+c.beam+'号').join('、')+(contacts.length>8?'…':''):'当前未计算到人体遮断红光。画面仍可能被人体遮住视线。';
+  window.__LASER_ROOM_CONTACTS__=contacts;window.__LASER_ROOM_RECEIVERS__={total:floorCount+wallCount,lit:floorCount+wallCount-floorOff-wallOff,off:floorOff+wallOff};
+}
+function disposeCoverage(){for(const child of [...coverageGroup.children]){coverageGroup.remove(child);child.geometry?.dispose();child.material?.dispose();}}
+function setLayout(resetAngle=false){
+  if(!plan)return;const mode=$('camera-layout').value,wall=mode==='wall';if(resetAngle)$('camera-fov').value=String(wall?plan.wallNominalAngle:plan.floorNominalAngle);
+  const angle=Number($('camera-fov').value),portrait=$('camera-orientation').value==='portrait',definition=$('fov-definition').value,lowering=wall?Number($('wall-lowering').value)/1000:0;
+  $('fov-value').textContent=angle+'°';$('wall-lowering-label').hidden=!wall;$('wall-lowering-value').textContent=(lowering*1000).toFixed(0)+'mm';
+  const sources=wall?plan.wall:plan.floor.filter(c=>mode==='future'||c.installed),selectedId=cameraEntries[activeCamera]?.id;disposeCoverage();
+  cameraEntries=sources.map(source=>{
+    const group=wall?source:source[mode],position=[...source.position];position[2]-=lowering;const fov=lensFov(angle,definition,portrait,plan.aspect),fit=fitCamera(position,group.targets,fov);
+    const c=new THREE.PerspectiveCamera(fov.vertical,fov.aspect,.015,Math.max(...group.targets.map(p=>Math.hypot(...p.map((v,k)=>v-position[k]))))*1.1);c.up.set(0,0,1);c.position.fromArray(position);c.lookAt(new THREE.Vector3().fromArray(position.map((v,k)=>v+fit.forward[k])));c.updateMatrixWorld(true);
+    const helper=new THREE.CameraHelper(c);helper.setColors(0xf6b95c,0xf6b95c,0xf6b95c,0x758995,0x758995);coverageGroup.add(helper);
+    return{...source,group,camera:c,fit,fov,position};
+  });
+  activeCamera=selectedId?cameraEntries.findIndex(c=>c.id===selectedId):-1;controls.enabled=activeCamera<0;
+  $('camera-count').textContent=cameraEntries.length+'台 · 模型原机位';$('camera-buttons').replaceChildren();$('camera-monitors').replaceChildren();
+  for(const [index,entry]of cameraEntries.entries()){
+    const button=document.createElement('button');button.textContent=entry.id;button.dataset.cameraId=entry.id;button.onclick=()=>selectCamera(index);$('camera-buttons').append(button);
+    const article=document.createElement('article');article.className='monitor';article.dataset.cameraId=entry.id;
+    const title=document.createElement('button');title.className='monitor-title';title.textContent=entry.id+' · 第'+entry.group.rows[0]+'–'+entry.group.rows[1]+'列';
+    const detail=document.createElement('span');detail.textContent=(wall?'墙面':entry.group.playerView==='正面'?'朝入口':'朝出口')+' · 俯角'+entry.fit.pitch.toFixed(1)+'°';title.append(detail);title.onclick=()=>selectCamera(index);
+    const feed=document.createElement('div');feed.className='camera-feed';feed.style.aspectRatio=String(entry.fov.aspect);entry.canvas=document.createElement('canvas');entry.canvas.width=portrait?360:640;entry.canvas.height=portrait?640:360;entry.context=entry.canvas.getContext('2d');feed.append(entry.canvas);
+    const note=document.createElement('p');note.className='feed-note';note.textContent='模型坐标固定 · '+(entry.fit.covered?'理想视场可容纳目标':'当前视场不足');
+    article.append(title,feed,note);$('camera-monitors').append(article);
+  }
+  feedRenderer.setSize(portrait?360:640,portrait?640:360,false);lastFeeds=-Infinity;
+  $('layout-note').textContent=wall?'3个模型墙侧机位，分别观察4列、排除最高一行；下调仅为对照预演。':mode==='current'?'6个现有中心轴机位；每对朝入口/出口观察相同的4列地面红点。':'12个中心轴机位，含模型中标注未来采购的6个；每对观察2列。';
+  updateVisibility();updateCameraInfo();
+  window.__LASER_ROOM_CAMERAS__={layout:mode,activeCamera,aspect:portrait?9/16:16/9,mounts:cameraEntries.map(e=>e.position),sourceMounts:cameraEntries.map(e=>e.position.map((v,k)=>k===2?v+lowering:v)),cameraIds:cameraEntries.map(e=>e.id),modelHash:layout.source.sha256};
+}
+function updateCameraInfo(){
+  if(!cameraEntries.length)return;const entry=cameraEntries[Math.max(0,activeCamera)],mm=entry.position.map(v=>(v*1000).toFixed(1));
+  $('camera-position').textContent=entry.id+' 镜头参考坐标(mm)\nX '+mm[0]+' / Y '+mm[1]+' / Z '+mm[2]+'\n'+entry.fit.pitch.toFixed(1)+'°向下 · '+entry.fov.horizontal.toFixed(1)+'° × '+entry.fov.vertical.toFixed(1)+'°';
+  document.querySelectorAll('[data-camera-id]').forEach(node=>node.classList.toggle('active',node.dataset.cameraId===cameraEntries[activeCamera]?.id));
+  coverageGroup.visible=activeCamera<0&&$('coverage').checked;
+  $('status').textContent=activeCamera<0?'● v2.0真实模型 · 相机原坐标 · 几何模拟':('● '+entry.id+' 实际机位画面 · '+($('receiver-only').checked?'接收点滤光预演':'普通视图'));
+}
+function selectCamera(index){activeCamera=index;controls.enabled=false;document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'));updateCameraInfo();}
+function view(name){
+  if(!modelBounds)return;activeCamera=-1;controls.enabled=true;const center=modelBounds.getCenter(new THREE.Vector3()),size=modelBounds.getSize(new THREE.Vector3()),radius=size.length()/2;
+  camera.up.set(0,0,1);
+  if(name==='overview'){const vfov=THREE.MathUtils.degToRad(camera.fov),hfov=2*Math.atan(Math.tan(vfov/2)*camera.aspect),distance=radius/Math.sin(Math.min(vfov,hfov)/2)*1.05;controls.target.copy(center);camera.position.copy(center).addScaledVector(new THREE.Vector3(layout.entryHighX?1:-1,-1,.85).normalize(),distance);}
+  else if(name==='top'){camera.up.set(0,1,0);controls.target.set((walkers.first+walkers.last)/2,walkers.midY,layout.floorZ);camera.position.copy(controls.target).add(new THREE.Vector3(0,0,Math.max(size.x,size.y)*1.8));}
+  else{const extra=name==='inside'?.5:4;camera.position.set(walkers.entry-walkers.direction*extra,walkers.midY,layout.floorZ+1.6);controls.target.set(walkers.last,walkers.midY,layout.floorZ+1.3);}
+  camera.updateProjectionMatrix();controls.update();document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name));updateCameraInfo();
+}
+function withCameraScene(filtered,render){
+  const state={model:model.visible,occlusion:occlusionRoot.visible,grid:grid.visible,labels:labelGroup.visible,coverage:coverageGroup.visible,background:scene.background},saved=[];
+  model.visible=!filtered;occlusionRoot.visible=filtered;grid.visible=false;labelGroup.visible=false;coverageGroup.visible=false;scene.background=filtered?blackBackground:normalBackground;
+  for(const node of cameraNodes){saved.push([node,'visible',node.visible]);node.visible=false;}
+  if(filtered){
+    for(const p of walkers.active())for(const mesh of p.colliders){saved.push([mesh,'material',mesh.material]);mesh.material=darkMaterial;}
+    for(const entry of dotEntries){saved.push([entry.mesh,'visible',entry.mesh.visible],[entry.mesh,'material',entry.mesh.material]);entry.mesh.visible=entry.mesh.visible&&entry.beam.color==='red';entry.mesh.material=whiteMaterial;}
+  }
+  try{render();}finally{for(const [object,key,value]of saved)object[key]=value;model.visible=state.model;occlusionRoot.visible=state.occlusion;grid.visible=state.grid;labelGroup.visible=state.labels;coverageGroup.visible=state.coverage;scene.background=state.background;}
+}
+function renderMain(){
+  const w=viewport.clientWidth,h=viewport.clientHeight;renderer.setScissorTest(false);renderer.setViewport(0,0,w,h);
+  if(activeCamera>=0){
+    const entry=cameraEntries[activeCamera],width=Math.min(w,h*entry.fov.aspect),height=width/entry.fov.aspect;
+    withCameraScene($('receiver-only').checked,()=>{renderer.clear();renderer.setViewport((w-width)/2,(h-height)/2,width,height);renderer.setScissor((w-width)/2,(h-height)/2,width,height);renderer.setScissorTest(true);renderer.render(scene,entry.camera);renderer.setScissorTest(false);});
+  }else{
+    model.visible=$('shell').checked;coverageGroup.visible=$('coverage').checked;
+    const saved=[];if($('wall-cutaway').checked)for(const object of wallItems)for(const material of (Array.isArray(object.material)?object.material:[object.material])){saved.push([material,material.transparent,material.opacity,material.depthWrite]);material.transparent=true;material.opacity=.23;material.depthWrite=false;}
+    renderer.render(scene,camera);for(const [m,t,o,d]of saved){m.transparent=t;m.opacity=o;m.depthWrite=d;}model.visible=true;
+  }
+}
+function renderFeeds(){
+  withCameraScene($('receiver-only').checked,()=>{for(const entry of cameraEntries){feedRenderer.render(scene,entry.camera);entry.context.drawImage(feedRenderer.domElement,0,0,entry.canvas.width,entry.canvas.height);}});
+}
+async function startup(){
+  const json=async name=>{const response=await fetch(new URL(name,base),{cache:'no-cache'});if(!response.ok)throw new Error(name+' HTTP '+response.status);return response.json();};
+  const [config,sceneLayout,cameraPlan]=await Promise.all([json('project.json'),json('scene-layout.json'),json('camera-plan.json')]);layout=sceneLayout;plan=cameraPlan;
+  const url=new URL(config.model.url,base);url.searchParams.set('v',config.model.revision);const response=await fetch(url);if(!response.ok)throw new Error('Model HTTP '+response.status);
+  const buffer=await response.arrayBuffer(),hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer.slice(0)))).map(v=>v.toString(16).padStart(2,'0')).join('');
+  if(hash!==layout.source.sha256||hash!==plan.source.sha256)throw new Error('模型、光路和相机数据不一致，请重新运行 npm run model:layout');
+  $('loading').textContent='模型校验通过，正在解析实际场景…';const loader=new Rhino3dmLoader();loader.setWorkerLimit(1);loader.setLibraryPath(new URL('rhino/',base).href);
+  model=await new Promise((resolve,reject)=>loader.parse(buffer,resolve,reject));const units=model.userData.settings?.modelUnitSystem,code=typeof units==='number'?units:units?.value,scale={1:1e-6,2:.001,3:.01,4:1,5:1000,8:.0254,9:.3048}[code];if(!scale)throw new Error('未支持的模型单位');
+  model.scale.setScalar(scale);scene.add(model);model.updateWorldMatrix(true,true);walkers=createWalkers(scene,layout);preparePhysicalScene();
+  $('model-description').textContent=config.model.name+' · '+items.length+'实体 / '+(model.userData.layers||[]).length+'图层';
+  $('model-version').textContent=config.model.revision;$('model-units').textContent=code===2?'毫米 → 米':'源单位 → 米';$('receiver-count').textContent=layout.receivers.filter(r=>r.kind==='floor').length+' / '+layout.receivers.filter(r=>r.kind==='wall').length;
+  const depth=Math.abs(layout.rows.at(-1)-layout.rows[0]);$('row-depth').textContent=depth.toFixed(2)+'m';$('layer').max=String(layout.rows.length);$('walk-progress').max=String(depth+.5);
+  $('loading').hidden=true;document.body.dataset.loaded='true';document.body.dataset.modelHash=hash;document.body.dataset.unitScale=String(scale);
+  setLayout(true);view('overview');inspectContact(true);
+  window.__LASER_ROOM__={source:'Rhino',model:config.model.name,sha256:hash,units:'meters',upAxis:'Z',frames:layout.rows.length,totalPairs:layout.receivers.length,meshCount:items.length};
+}
+for(const id of ['receiver-only','beams','shell','wall-cutaway','coverage'])$(id).onchange=()=>{updateVisibility();updateCameraInfo();lastFeeds=-Infinity;};
+$('layer').oninput=updateVisibility;$('light-mode').onchange=()=>{inspectContact(true);lastFeeds=-Infinity;};
+$('camera-layout').onchange=()=>setLayout(true);for(const id of ['camera-orientation','fov-definition'])$(id).onchange=()=>setLayout();$('camera-fov').oninput=()=>setLayout();$('wall-lowering').oninput=()=>setLayout();
+document.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>view(button.dataset.view));
+$('walk-toggle').onclick=()=>{if(walkers){walkers.setWalking(!walkers.walking);updateWalkStatus();}};$('walk-reset').onclick=()=>{if(walkers){walkers.reset($('player-mode').value);inspectContact(true);}};$('player-mode').onchange=()=>{if(walkers){walkers.reset($('player-mode').value);inspectContact(true);}};
+$('walk-progress').oninput=()=>{if(walkers){walkers.seek(Number($('walk-progress').value));inspectContact(true);}};$('inspect-941').onclick=()=>{if(walkers){walkers.seek(9.41);inspectContact(true);}};
+renderer.setAnimationLoop(now=>{
+  const dt=Math.min((now-lastTime)/1000,.05);lastTime=now;if(!model||!walkers)return;walkers.update(dt);inspectContact();controls.update();
+  if(now-lastRender>=1000/30){renderMain();lastRender=now;}
+  if(now-lastFeeds>=1000/Number($('feed-fps').value)){renderFeeds();lastFeeds=now;}
 });
-scene.remove(person);
-// Independent, smooth random routes with short pauses and personal-space checks.
-let walking=true,walkZ=0,lastWalkTime=performance.now();
-const walkButton=document.querySelector('#walk-toggle'),walkSlider=document.querySelector('#walk-progress');
-const randomBetween=(lo,hi)=>lo+Math.random()*(hi-lo);
-function chooseRoute(p){p.goalX=randomBetween(-.92,.92);p.targetSpeed=randomBetween(.65,1.35);p.decision=randomBetween(1.4,3.8);p.pause=Math.random()<.25?randomBetween(.5,1.8):0;}
-function randomizePeople(atEntrance=false){people.forEach((p,i)=>{p.x=randomBetween(-.85,.85);p.z=atEntrance?-.8-i*1.1:.5+i*2.5+randomBetween(-.2,.2);p.phase=randomBetween(0,Math.PI*2);p.speed=randomBetween(.7,1.2);p.yaw=0;p.exitWait=0;chooseRoute(p);});}
-function syncWalk(){people.forEach(p=>{p.root.position.set(p.x,0,p.z);p.root.rotation.y=p.yaw;});walkZ=people[0].z;walkSlider.value=String(walkZ);document.querySelector('#walk-position').textContent=walkZ<0?'入口外':walkZ>9.9?'出口外':walkZ.toFixed(2)+'m';walkButton.textContent=walking?'暂停行走':'继续行走';window.__LASER_ROOM_WALKER__={height:1.8,mode:'independent-random',z:walkZ,walking,count:4,people:people.map(p=>({id:p.id,height:1.8,x:p.x,z:p.z,speed:p.speed,paused:p.pause>0}))};}
-function seekP1(z){const shift=z-people[0].z;people.forEach(p=>{p.z+=shift;});walking=false;syncWalk();inspectContact(true);}
-walkButton.onclick=()=>{walking=!walking;syncWalk();};
-document.querySelector('#walk-reset').onclick=()=>{randomizePeople(true);walking=true;syncWalk();inspectContact(true);};
-walkSlider.oninput=()=>seekP1(Number(walkSlider.value));
-function animateWalker(){const now=performance.now(),dt=Math.min((now-lastWalkTime)/1000,.05);lastWalkTime=now;
- for(const p of people){let moved=0;
- if(walking){p.decision-=dt;if(p.decision<=0)chooseRoute(p);
- if(p.z>10.8){p.exitWait+=dt;if(p.exitWait>1.5){const z=randomBetween(-1.8,-.8),x=randomBetween(-.85,.85);if(people.every(q=>q===p||Math.hypot(x-q.x,z-q.z)>.7)){p.z=z;p.x=x;p.exitWait=0;chooseRoute(p);}}}
- else if(p.pause>0){p.pause-=dt;p.speed=THREE.MathUtils.damp(p.speed,0,5,dt);}
- else{p.speed=THREE.MathUtils.damp(p.speed,p.targetSpeed,2,dt);let dx=THREE.MathUtils.clamp((p.goalX-p.x)*.7,-.28,.28)*dt,dz=p.speed*dt;
- const nx=THREE.MathUtils.clamp(p.x+dx,-.95,.95),nz=p.z+dz;
- const blocked=people.some(q=>q!==p&&Math.hypot(nx-q.x,nz-q.z)<.60);
- if(!blocked){p.x=nx;p.z=nz;moved=Math.hypot(dx,dz);p.yaw=THREE.MathUtils.damp(p.yaw,Math.atan2(dx,dz),5,dt);p.phase+=moved*7;}
- else{p.decision=Math.min(p.decision,.4);p.speed=THREE.MathUtils.damp(p.speed,.2,4,dt);}
- }}
- const swing=walking&&moved>0?Math.sin(p.phase)*.30:0;p.legs[0].rotation.x=swing;p.legs[1].rotation.x=-swing;p.arms[0].rotation.x=-swing*.8;p.arms[1].rotation.x=swing*.8;
- }syncWalk();
-}
-randomizePeople();syncWalk();
-const contactRay=new THREE.Raycaster(),rayOrigin=new THREE.Vector3(),rayDirection=new THREE.Vector3();
-const hitMaterial=new THREE.MeshBasicMaterial({color:0xff5b52,depthWrite:false});
-let lastContactTime=-Infinity;
-function inspectContact(force=false){const now=performance.now();if(!force&&now-lastContactTime<100)return;lastContactTime=now;people.forEach(p=>p.root.updateWorldMatrix(true,true));const contacts=[];
- for(let n=0;n<12;n++)for(let k=1;k<=6;k++)for(let d=0;d<2;d++){
- const v=k*.4,z=n*.9;rayOrigin.set(d===0?v-1.4:-1.4,d===0?2.8:v,z);rayDirection.set(d===0?0:1,d===0?-1:0,0);contactRay.set(rayOrigin,rayDirection);contactRay.near=0;contactRay.far=2.8;
- const hitPeople=people.filter(p=>Math.abs(p.root.position.z-z)<.8&&contactRay.intersectObjects(p.colliders,false).length>0).map(p=>p.id);const hit=hitPeople.length>0;const idx=(k-1)*4+d*2;beams[n].children[idx].material=hit?hitMaterial:beamMat;beams[n].children[idx+1].material=hit?hitMaterial:glowMat;
- receivers[n][(k-1)*2+d].material=hit?receiverOffMat:receiverMat;
- if(hit)contacts.push({frame:n+1,direction:d===0?'上下':'左右',beam:k,people:hitPeople});}
- window.__LASER_ROOM_RECEIVERS__={total:144,lit:144-contacts.length,off:contacts.length};window.__LASER_ROOM_CONTACTS__=contacts;const summary=document.querySelector('#collision-summary');summary.textContent= `4人随机行走 · P1 ${walkZ.toFixed(2)}m · 模型${contacts.length?'碰到'+contacts.length+'条光束':'当前未碰线'}（几何模拟）`;summary.style.color=contacts.length?'#ff8a78':'#83dfbf';document.querySelector('#contact-status').textContent=contacts.length?'模型碰线：'+contacts.map(h=>`${h.people.join("/")}：第${h.frame}列${h.direction}${h.beam}号`).join('、'):'模型当前未碰线（非图像识别）';
-}
-document.querySelector('#inspect-941').onclick=()=>seekP1(9.41);
-setLayout();
-window.__LASER_ROOM__={frames:12,pairsPerFrame:12,totalPairs:144,crossingsPerFrame:36,frameSize:2.8,beamSpacing:.4,frameSpacing:.9,depth:9.9,positions:Array.from({length:6},(_,i)=>(i+1)*.4)};
-// Filter-view approximation: keep opaque occluders and depth, suppress their light.
-function applyReceiverView(){if(!document.querySelector('#receiver-only').checked)return null;const saved=[];
- scene.traverse(object=>{if(object.isMesh&&!object.userData.receiver){saved.push([object,'material',object.material]);object.material=filterDarkMat;}else if(object.isSprite||object.isLine||object.isPoints){saved.push([object,'visible',object.visible]);object.visible=false;}});
- for(const group of beams){saved.push([group,'visible',group.visible]);group.visible=false;}
- saved.push([scene,'background',scene.background]);scene.background=new THREE.Color(0x010203);return saved;
-}
-function restoreReceiverView(saved){if(saved)for(const [object,key,value]of saved)object[key]=value;}
-renderer.setAnimationLoop(()=>{
- animateWalker();
- inspectContact();
- const filterSaved=applyReceiverView();
- controls.update();
- sideWalls.visible=activeCamera>=0||!document.querySelector('#wall-cutaway').checked;
- const vw=viewport.clientWidth,vh=viewport.clientHeight;
- if(activeCamera<0){renderer.setViewport(0,0,vw,vh);renderer.setScissorTest(false);renderer.render(scene,camera);}
- else{const w=Math.min(vw,vh*sensorAspect),h=w/sensorAspect,x=(vw-w)/2,y=(vh-h)/2;
- renderer.setScissorTest(false);renderer.setViewport(0,0,vw,vh);renderer.clear();renderer.setViewport(x,y,w,h);renderer.setScissor(x,y,w,h);renderer.setScissorTest(true);renderer.render(scene,securityCameras[activeCamera]);renderer.setScissorTest(false);}
-sideWalls.visible=true;
-const bodiesVisible=cameraBodies.visible,coverageVisible=coverageGroup.visible;cameraBodies.visible=false;coverageGroup.visible=false;
- feedRenderers.forEach((r,i)=>{if(cameraLayout!=='top'||i<3)r.render(scene,securityCameras[i]);});cameraBodies.visible=bodiesVisible;coverageGroup.visible=coverageVisible;restoreReceiverView(filterSaved);
-});document.querySelector('#status').textContent='● 模拟就绪 · 真实比例 1:1';
-
-view('overview');
-
-walking=true;syncWalk();inspectContact(true);
+startup().catch(fail);

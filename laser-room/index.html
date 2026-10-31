@@ -1,17 +1,30 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>激光房间 · 空间模拟</title><link rel="stylesheet" href="./src/style.css"><link rel="stylesheet" href="../src/project-nav.css"></head><body class="project-simulation">
-<nav class="project-switcher" aria-label="项目模式">
-  <span class="project-brand">激光空间 / 项目工作台</span>
-  <a href="../">真实空间模型</a>
-  <a href="./" aria-current="page">激光房间模拟</a>
-  <details class="project-info">
-    <summary>模型资料</summary>
-    <div class="project-info-panel">
-      <strong>真实空间模型</strong>
-      <p>读取你提供的 Rhino 原工程，按源文件单位换算真实尺寸。支持图层显隐、物体尺寸与高程查看、空间漫游、新版模型预览和查看配置导出。</p>
-      <strong>激光房间模拟</strong>
-      <p>12框激光阵列、四人行走、几何碰线提示与摄像头画面预演。</p>
-      <p class="project-boundary">模拟阵列尚未与原模型定位对齐；摄像头位置与观察目标待按现场布置逐台校正。</p>
-    </div>
-  </details>
-</nav>
-<main id="viewport" aria-label="三维激光房间"></main><header><div class="eyebrow">SPATIAL LAB / 001</div><h1>激光房间<span>空间模拟</span></h1><p>12个断面 · 144组激光与接收器</p><p id="collision-summary" aria-live="polite"></p></header><aside><div class="panel-title">阵列规格 <span>单位 / m</span></div><dl><div><dt>框内尺寸</dt><dd>2.8 × 2.8</dd></div><div><dt>框间距</dt><dd>0.90</dd></div><div><dt>首尾跨度</dt><dd>9.90</dd></div><div><dt>光束间距</dt><dd>0.40</dd></div><div><dt>每框光束</dt><dd>6 + 6</dd></div><div><dt>内部交点</dt><dd>6 × 6</dd></div></dl><label class="toggle"><input id="receiver-only" type="checkbox" checked>仅接收点（滤光模拟）</label><label class="toggle"><input id="beams" type="checkbox">显示激光（普通视图）</label><label class="toggle"><input id="shell" type="checkbox" checked>显示框架</label><label class="toggle"><input id="wall-cutaway" type="checkbox" checked>总览剖开左右封板</label><label for="layer">显示断面 <output id="layer-value">全部12框</output></label><input id="layer" type="range" min="0" max="12" value="0"><section class="walker-panel"><div class="panel-title">4人随机行走 · 每人180cm</div><div class="walker-actions"><button id="walk-toggle">暂停行走</button><button id="walk-reset">重新开始</button></div><label for="walk-progress">P1位置 <output id="walk-position">入口</output></label><input id="walk-progress" type="range" min="-0.8" max="11.9" step="0.01" value="-0.8"><p>独立路线 · 随机变速 / 横移 / 停顿<br>P1橙 / P2蓝 / P3紫 / P4绿<br>0.65–1.35m/s · 各自循环</p></section><section class="camera-panel"><div class="panel-title">摄像头部署对比</div><select id="camera-layout" aria-label="摄像头部署方案"><option value="cross">6台 · 左右相向斜拍（试验）</option><option value="top">3台 · 原顶部向下</option></select><p id="layout-note"></p><button id="inspect-941">定位到9.41m</button><p id="contact-status" role="status"></p><p>碰线提示来自模型几何相交，不是摄像头识别结果。</p><div class="camera-buttons"><button data-camera="3">CAM 04</button><button data-camera="4">CAM 05</button><button data-camera="5">CAM 06</button><button data-camera="0">01 · 1–4列</button><button data-camera="1">02 · 5–8列</button><button data-camera="2">03 · 9–12列</button></div><label for="camera-fov">水平视场角 <output id="fov-value">90°</output></label><input id="camera-fov" type="range" min="40" max="120" value="90"><label class="toggle"><input id="coverage" type="checkbox" checked>显示摄像头覆盖范围</label><p id="coverage-value"></p><p id="calibration-note">16:9模拟镜头，非具体罗技型号标定</p></section><div class="legend"><i></i>上 / 入口左侧发射 <b></b>下 / 右侧接收</div></aside><section id="camera-rail" aria-label="摄像头实时监看"><div class="rail-heading">CAM / 同步监看 <span>机身旋转90°</span></div><article class="monitor"><button class="monitor-title" data-expand-camera="0">CAM 01 <span>第1–4列 · 点击放大</span></button><div class="camera-feed" id="feed-0" aria-label="CAM 01模拟画面"></div></article><article class="monitor"><button class="monitor-title" data-expand-camera="1">CAM 02 <span>第5–8列 · 点击放大</span></button><div class="camera-feed" id="feed-1" aria-label="CAM 02模拟画面"></div></article><article class="monitor"><button class="monitor-title" data-expand-camera="2">CAM 03 <span>第9–12列 · 点击放大</span></button><div class="camera-feed" id="feed-2" aria-label="CAM 03模拟画面"></div></article><article class="monitor"><button class="monitor-title" data-expand-camera="3">CAM 04 <span>斜拍 · 点击放大</span></button><div class="camera-feed" id="feed-3" aria-label="CAM 04模拟画面"></div></article><article class="monitor"><button class="monitor-title" data-expand-camera="4">CAM 05 <span>斜拍 · 点击放大</span></button><div class="camera-feed" id="feed-4" aria-label="CAM 05模拟画面"></div></article><article class="monitor"><button class="monitor-title" data-expand-camera="5">CAM 06 <span>斜拍 · 点击放大</span></button><div class="camera-feed" id="feed-5" aria-label="CAM 06模拟画面"></div></article></section><footer><nav aria-label="视角"><button data-view="overview" class="active">空间总览</button><button data-view="front">正视点阵</button><button data-view="inside">进入房间</button><button data-view="top">俯视布局</button></nav><p>拖动旋转 · 滚轮缩放 · 右键平移 / 双指平移</p></footer><div id="status" role="status">正在建立三维空间…</div><script type="module" src="./src/main.js"></script></body></html>
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>激光空间 v2.0 · 现场模拟</title><link rel="stylesheet" href="./src/style.css"><link rel="stylesheet" href="../src/project-nav.css"></head>
+<body class="project-live-simulation">
+<nav class="project-switcher" aria-label="项目模式"><span class="project-brand">激光空间 / 项目工作台</span><a href="../">真实空间模型</a><a href="./" aria-current="page">激光房间模拟</a><details class="project-info"><summary>模型资料</summary><div class="project-info-panel"><strong>同一份 v2.0 Rhino 场景</strong><p>空间、反光板、红绿光路和机位都来自当前工程，保留原坐标与Z轴向上。</p><p class="project-boundary">滤光、点位熄灭与行人为几何预演，未接入现场视频。光心、实际视场和畸变仍待标定。</p></div></details></nav>
+<main id="viewport" aria-label="v2.0真实模型模拟区"></main>
+<header><div class="eyebrow">SPATIAL LAB / RHINO V2.0</div><h1>激光空间<span>现场模拟</span></h1><p id="model-description">正在读取与工作台相同的完整模型…</p><p id="collision-summary" aria-live="polite"></p></header>
+<aside class="controls"><details id="controls-details" open><summary>场景与机位设置</summary><div class="control-body">
+<div class="panel-title">模型校验 <span>真实比例 1:1</span></div><dl><div><dt>模型版本</dt><dd id="model-version">—</dd></div><div><dt>源单位</dt><dd id="model-units">—</dd></div><div><dt>地面 / 墙面点位</dt><dd id="receiver-count">—</dd></div><div><dt>首尾点位跨度</dt><dd id="row-depth">—</dd></div></dl>
+<label class="toggle"><input id="receiver-only" type="checkbox" checked>摄像头仅接收点（滤光模拟）</label>
+<label class="toggle"><input id="beams" type="checkbox">显示模型激光路径（参考）</label>
+<label class="toggle"><input id="shell" type="checkbox" checked>总览显示空间结构</label>
+<label class="toggle"><input id="wall-cutaway" type="checkbox" checked>总览墙面半透明</label>
+<label>点位列筛选 <output id="layer-value">全部12列</output><input id="layer" type="range" min="0" max="12" value="0"></label>
+<label>灯光状态（模拟）<select id="light-mode"><option value="red">红光</option><option value="green">切换绿光（红点报警）</option></select></label>
+<section><div class="panel-title">按模型实际机位拍摄</div>
+<label>机位方案<select id="camera-layout"><option value="current">现有6台 · 3区、每区4列</option><option value="future">未来12台 · 每组2列</option><option value="wall">墙面3台 · 每组4列</option></select></label><p id="layout-note"></p>
+<div class="row-controls"><label>画面方向<select id="camera-orientation"><option value="landscape">横构图 16:9</option><option value="portrait">竖构图 9:16</option></select></label><label>标称角度解释<select id="fov-definition"><option value="diagonal">对角角（暂定）</option><option value="horizontal">水平角（对照）</option></select></label></div>
+<label>参考视场角 <output id="fov-value">85°</output><input id="camera-fov" type="range" min="40" max="140" value="85"></label>
+<label id="wall-lowering-label" hidden>同吊点竖直下调（仅预演）<output id="wall-lowering-value">0mm</output><input id="wall-lowering" type="range" min="0" max="600" step="10" value="0"></label>
+<label class="toggle"><input id="coverage" type="checkbox">总览显示相机覆盖范围</label>
+<div id="camera-buttons" class="camera-buttons" aria-label="选择实际机位"></div><p id="camera-position"></p>
+<label>监看预演刷新<select id="feed-fps"><option value="8">8fps</option><option value="15">15fps</option><option value="4">4fps（对照）</option></select></label><p>原机位坐标固定；视场和俯角为理想投影。不是硬件相机设置。</p></section>
+<section><div class="panel-title">人体遮挡预演</div><label>行走方式<select id="player-mode"><option value="zones">3区单人试验 · 每区1人</option><option value="free">4人自由行走 · 压力对照</option></select></label>
+<div class="walker-actions"><button id="walk-toggle">暂停行走</button><button id="walk-reset">重新开始</button></div><label>P1距首列位置 <output id="walk-position">—</output><input id="walk-progress" type="range" min="-0.5" max="10.4" step="0.01" value="0"></label>
+<button id="inspect-941">P1定位9.41m（越区调试）</button><p id="phase-note">每名行人在自己的区域内独立移动。</p><p>简化人形身高180cm。光路遮挡驱动点位熄灭；视线遮挡保留实体深度。</p><p id="contact-status" role="status"></p></section>
+</div></details></aside>
+<section id="camera-rail" aria-label="实际机位同步监看"><div class="rail-heading">CAM / 实际机位 <span id="camera-count">—</span></div><div id="camera-monitors"></div></section>
+<footer><nav aria-label="场景视角"><button data-view="overview" class="active">空间总览</button><button data-view="front">入口向内</button><button data-view="inside">进入空间</button><button data-view="top">俯视布局</button></nav><p>拖动旋转 · 滚轮缩放 · 右键平移</p></footer>
+<div id="status" role="status">正在校验模型与机位…</div><div id="loading" role="status">正在读取完整 v2.0 模型…</div><div id="error" role="alert" hidden></div>
+<script type="module" src="./src/main.js"></script></body></html>
