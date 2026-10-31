@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "release": {
+    "tag": "model-v2.0-02b93cb9",
+    "url": "https://github.com/dongfeng19830925-stack/laser-space/releases/tag/model-v2.0-02b93cb9"
+  },
+  "model": {
+    "name": "激光空间模拟v2.0.3dm",
+    "bytes": 144661528,
+    "sha256": "02b93cb9143591c5846b8e83c6321a62dfccb9303e8ea39209a52fc028526456"
+  },
+  "archive": {
+    "compression": "gzip",
+    "bytes": 42154773,
+    "sha256": "b2c670cd9bf93225eb7ffc30903390f85ac3e5353077e1be9e5a2d5ce40bd41b"
+  },
+  "parts": [
+    {
+      "name": "space-v2.0.3dm.gz.part01",
+      "bytes": 16777216,
+      "sha256": "aac5122299b9364db3f93756cd0b56b4514fd448b956ba40913ea8981045e062",
+      "url": "https://github.com/dongfeng19830925-stack/laser-space/releases/download/model-v2.0-02b93cb9/space-v2.0.3dm.gz.part01"
+    },
+    {
+      "name": "space-v2.0.3dm.gz.part02",
+      "bytes": 16777216,
+      "sha256": "be60bfac50ec066837c544536d7d6dc30b3d681acf6426ca0dd571658a519864",
+      "url": "https://github.com/dongfeng19830925-stack/laser-space/releases/download/model-v2.0-02b93cb9/space-v2.0.3dm.gz.part02"
+    },
+    {
+      "name": "space-v2.0.3dm.gz.part03",
+      "bytes": 8600341,
+      "sha256": "6dd9b2558e00765e928f6226537e1cc857d9294bd4670eea38b163f8be9e4e91",
+      "url": "https://github.com/dongfeng19830925-stack/laser-space/releases/download/model-v2.0-02b93cb9/space-v2.0.3dm.gz.part03"
+    }
+  ]
+}

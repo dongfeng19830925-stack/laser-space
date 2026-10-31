@@ -1,0 +1,14 @@
+.project-switcher{position:fixed;inset:0 0 auto;z-index:20;height:56px;display:flex;align-items:center;gap:8px;padding:0 24px;margin:0;border:0;border-bottom:1px solid #30413f;border-radius:0;background:#111b22;color:#dfeae8;font:13px system-ui,sans-serif}
+.project-switcher .project-brand{margin-right:auto;font-size:13px;color:#a9c6bf;letter-spacing:1px}
+.project-switcher a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:#a3b9b5;white-space:nowrap;padding:9px 14px;border:1px solid transparent;border-radius:6px}
+.project-switcher a[aria-current=page]{background:#24453e;color:#d3fff2;border-color:#416c5e}
+.project-switcher a:hover{background:#24362f;color:#e4fff5}
+.project-switcher a:focus-visible,.project-switcher summary:focus-visible{outline:2px solid #72d9be;outline-offset:3px}
+.project-info{margin-left:8px}.project-info summary{cursor:pointer;white-space:nowrap;color:#b9cbc6;padding:9px 4px;font-size:12px}
+.project-info-panel{position:absolute;right:24px;top:64px;width:340px;max-width:calc(100vw - 32px);padding:20px;background:#15242b;border:1px solid #36564b;border-radius:10px;box-shadow:0 12px 40px #0006;line-height:1.8}
+.project-info-panel strong{font-size:13px;color:#d3fff2}.project-info-panel p{margin:6px 0 16px;color:#a7bbb6;font-size:12px}.project-info-panel p:last-child{margin-bottom:0}.project-info-panel .project-boundary{border-top:1px solid #365148;padding-top:12px;color:#d5c59d}
+body.project-model .topbar{margin-top:56px}body.project-model .workspace{height:calc(100dvh - 132px)}
+body.project-simulation #viewport{top:56px}body.project-simulation header{transform:translateY(56px)}body.project-simulation aside{top:211px;max-height:calc(100dvh - 336px)}body.project-simulation #camera-rail{top:56px}
+@media(max-width:1000px){.project-switcher{padding:0 14px}.project-switcher .project-brand{display:none}.project-switcher .project-info{margin-left:auto}}
+@media(max-width:700px){body.project-model .workspace{height:auto}}
+@media(max-width:600px){.project-switcher{gap:4px;padding:0 8px}.project-switcher a{font-size:12px;padding:9px}.project-info summary{font-size:11px}.project-info-panel{right:16px}body.project-simulation aside{top:171px;max-height:calc(100dvh - 336px)}}

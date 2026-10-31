@@ -6,6 +6,21 @@
 
 源码仓库：https://github.com/dongfeng19830925-stack/laser-space
 
+## 项目模式与已整合成果
+
+两个页面顶部均提供“真实空间模型 / 激光房间模拟”切换，“模型资料”可查看各自的功能和当前校正进度。
+
+- **真实空间模型**：当前采用 `激光空间模拟v2.0.3dm`，源单位毫米，1591 个源物体、23 个图层。包含空间结构、激光路径、发射头、接收器、摄像机和反光板，默认显示全部图层。按源文件单位换算为米，保留 Z 轴向上、图层、物体名称及相对坐标。已有图层显隐、尺寸与高程查看、空间漫游、新版 `.3dm` 本地预览及查看配置导出。
+- **激光房间模拟**：现有12框阵列、行走、几何碰线和摄像头预演，与真实空间模型同属一个可持续编辑的项目。
+
+模拟阵列与 Rhino 原模型尚未定位对齐。当前摄像头机位和观察目标是预设，待根据现场安装情况逐台校正，不能作为现场已安装位置的记录。
+
+真实模型工作台新增“现场摄像头预演”，使用v2.0实际机位坐标，支持现有6台/未来12台地面相机、3台墙面相机、横竖构图，以及墙面同吊点高度对照。地面按85°、墙面按120°理想视场计算；镜头标定前不能把预演高度当作最终施工尺寸。机位编号、俯角和计算依据见 [CAMERA_PLAN.md](CAMERA_PLAN.md)。独立 `laser-room/` 仍为早期参数阵列，其试验机位不代表现场机位。
+
+当前验收以6台、3区、每区最多1名玩家为准，目标是对72个地面红色光点做红色滤片＋黑白视频＋逐点ROI亮度检测，红光被遮断或切绿光均报警。12台是后续扩展方案。硬件亮度检测与玩家互遮挡测试尚未接入；几何预演通过不代表该验收已通过。
+
+现有相机1080p、光斑约50mm；当前试验预算采用约480p、8fps、暂定200ms检出/响应目标。“现场摄像头预演→地面采集预算”可比较像素与采样等待，实际设备尚未配置。详细边界与优化方案见 [CAPTURE_PLAN.md](CAPTURE_PLAN.md)。
+
 ## 本地启动流程
 
 需要 Node.js 22.12 或以上（含 npm）。在终端执行：
@@ -56,9 +71,16 @@ https://dongfeng19830925-stack.github.io/laser-space/laser-room/
 ## 更新模型
 
 1. 在犀牛中继续修改原工程，明确设置文件单位，保留图层和设备物体名称。使用“着色”视图后保存，以保留渲染网格。
-2. 将新版模型替换到 `public/models/space.3dm`。
-3. 按需要更新 `public/project.json` 中的模型名称和版本。
-4. 提交并推送到 `main`。GitHub Actions 自动构建并更新 GitHub Pages。
+2. 运行 `npm run model:package -- "新版完整模型.3dm的路径" "新的Release标签"`，生成无损gzip分片及 `models/manifest.json`。输出目录在 `.local/model-release/<标签>/`。
+3. 在同名GitHub Release上传全部 `.partNN` 分片和 `manifest.json`，完成发布后，再提交代码与清单。不要将完整 `.3dm` 或压缩包加入普通Git提交。
+4. 按需要更新 `public/project.json` 中的模型名称和版本。运行 `npm run model:prepare`，自动下载、拼合、解压并核对SHA-256，生成本地 `public/models/space.3dm`；本地模型校验一致时直接复用。
+5. 运行 `npm run build` 后提交并推送到 `main`。GitHub Actions 自动还原模型、构建并更新 GitHub Pages。新版模型若不匹配 `public/camera-plan.json` 的SHA-256，现场机位预演会停用，需从新版模型重新提取机位。
+
+### 大模型存储
+
+完整模型使用GitHub Release分片保存，不使用Git LFS。仓库仅保存代码和 [模型清单](models/manifest.json)，每个分片不超过16MiB；分片、拼合后的gzip和解压后的原模型均有大小与SHA-256校验。当前v2.0原模型144,661,528字节，无损压缩为42,154,773字节，分为3片，几何、单位、图层和UUID不变。
+
+首次启动/构建需要从Release下载，之后校验通过的本地模型可离线复用。Pages部署时还原普通 `.3dm` 文件，因此浏览器仍从同一网站加载，无需跨域读取Release资源。仓库中的旧模型已停止跟踪，本机生成文件被Git忽略。
 
 网页的“打开新版模型”在本机解析选中的文件，不会上传或改动线上模型。这样可以在正式发布前检查新版。图层与查看设置按模型文件 SHA-256 隔离保存在当前浏览器，“保存查看配置”可以导出 JSON。
 
@@ -77,12 +99,15 @@ https://dongfeng19830925-stack.github.io/laser-space/laser-room/
 - `src/style.css`：界面样式。
 - `index.html`：界面结构。
 - `public/project.json`：模型地址、名称与版本。
-- `public/models/space.3dm`：当前工程模型。
+- `models/manifest.json`：当前模型Release地址、分片顺序和校验值。
+- `scripts/prepare-model.mjs`：下载、拼合、还原并验证模型。
+- `scripts/package-model-release.mjs`：为后续模型生成Release分片和清单。
+- `public/models/space.3dm`：启动/构建时生成的当前工程模型，不加入Git。
 - `.github/workflows/deploy.yml`：GitHub Pages 自动部署。
 
 原模型中的文字、尺寸、引线和填充等施工注释不一定被 Three.js 转换；三维实体使用 Rhino 保存的渲染网格。需要完整工程信息时，请以 Rhino 原工程为准。模型文件会随站点部署，可被网站访问者下载。
 
-Rhino 模型查看器尚未加入激光设备效果。独立的 `laser-room/` 页面提供参数化模拟，两者暂未做几何绑定。之后可继续更新 Rhino 模型。
+当前 Rhino v2.0 模型已包含激光路径及设备、摄像机和反光板几何，工作台按原坐标显示。独立的 `laser-room/` 页面提供参数化模拟，两者暂未做几何绑定；摄像机拍摄方向和观察目标仍待按现场说明逐台设置。
 
 ## 首次启用 GitHub Pages
 

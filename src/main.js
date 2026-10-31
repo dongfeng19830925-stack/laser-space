@@ -2,6 +2,7 @@ import './style.css';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {Rhino3dmLoader} from 'three/addons/loaders/3DMLoader.js';
+import {createCameraPreview} from './camera-preview.js';
 
 const $ = id => document.getElementById(id);
 const mount = $('viewport');
@@ -17,6 +18,7 @@ renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=1.25;
 mount.append(renderer.domElement);
 const controls=new OrbitControls(camera,renderer.domElement);
+const cameraPreview=createCameraPreview({scene,controls,stage:document.querySelector('.stage')});
 controls.enableDamping=true;controls.dampingFactor=0.09;controls.minDistance=0.1;controls.maxDistance=120;
 controls.maxPolarAngle=Math.PI*0.96;
 scene.add(new THREE.HemisphereLight(0xd9ebff,0x647066,2.3));
@@ -28,6 +30,7 @@ grid.material.transparent=true;grid.material.opacity=0.25;scene.add(grid);
 const selectionBox=new THREE.Box3Helper(new THREE.Box3(),0x8af2ce);selectionBox.visible=false;scene.add(selectionBox);
 
 let model=null,layers=[],items=[],edgeItems=[],selected=null,currentName='',modelKey='',metresPerUnit=0.001;
+const previewWallMaterials=[];
 let view='perspective',currentPreset='space',walk=false,loadId=0,toastTimer;
 const keys=new Set(),pointer={down:false,x:0,y:0,moved:false};
 const clock=new THREE.Clock();
@@ -45,6 +48,7 @@ function categoryColor(path){if(/设备箱/.test(path))return 0x71cbb6;if(/地�
 function visibleToRoot(object){let o=object;while(o){if(!o.visible)return false;o=o.parent;}return true;}
 
 function refreshAppearance(){
+  previewWallMaterials.length=0;
   for(const object of items){
     const idx=getLayerIndex(object),layer=layers[idx],path=layer?.path||'';
     object.visible=layer?.visible??true;
@@ -55,6 +59,7 @@ function refreshAppearance(){
       if(mat.color)mat.color.set($('original-colors').checked&&orig!==undefined?orig:categoryColor(path));
       const translucent=object.isMesh&&wallLayer(path)&&$('transparent').checked;
       mat.transparent=translucent;mat.opacity=translucent?0.24:1;mat.depthWrite=!translucent;
+      if(translucent)previewWallMaterials.push(mat);
       mat.side=THREE.DoubleSide;
       if(mat.emissive)mat.emissive.set(object===selected?0x234b3e:0x000000);
       mat.needsUpdate=true;
@@ -103,6 +108,7 @@ function modelBounds(visible=true){
   return box;
 }
 function fit(){
+  cameraPreview.stop();
   if(walk)toggleWalk(false);
   const box=modelBounds(),center=box.getCenter(new THREE.Vector3()),size=box.getSize(new THREE.Vector3());
   controls.target.copy(center);
@@ -114,7 +120,7 @@ function fit(){
   camera.position.copy(center).addScaledVector(direction,distance);
   camera.near=0.01;camera.far=Math.max(500,distance*10);camera.updateProjectionMatrix();controls.update();save();
 }
-function setView(name,store=true){view=name;document.querySelectorAll('[data-view]').forEach(b=>{const active=b.dataset.view===name;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});fit();if(store)save();}
+function setView(name,store=true){cameraPreview.stop();view=name;document.querySelectorAll('[data-view]').forEach(b=>{const active=b.dataset.view===name;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});fit();if(store)save();}
 
 function selectObject(object){
   selected=object;selectionBox.visible=!!object;
@@ -132,6 +138,7 @@ function selectObject(object){
 function refreshSelected(){for(const obj of items){for(const mat of (Array.isArray(obj.material)?obj.material:[obj.material]))if(mat?.emissive)mat.emissive.set(obj===selected?0x234b3e:0);}}
 
 async function loadBuffer(buffer,name){
+  cameraPreview.setModel('');
   const request=++loadId;delete document.body.dataset.loaded;$('loading').hidden=false;$('error').hidden=true;$('loading-text').textContent='正在解析真实尺寸几何…';
   try{
     const hash=await crypto.subtle.digest('SHA-256',buffer.slice(0));
@@ -162,7 +169,7 @@ async function loadBuffer(buffer,name){
     }
     $('source-units').textContent=`${unit.name} → 米`;$('model-name').textContent=name;$('mesh-count').textContent=items.filter(o=>o.isMesh).length;
     $('info-layer-count').textContent=layers.length;$('layer-count').textContent=layers.length+' 层';
-    listLayers();setPreset('space',false);selectObject(null);
+    listLayers();setPreset('all',false);selectObject(null);
     const saved=storageRead();
     if(saved?.schemaVersion===1){
       for(const layer of layers){const old=saved.layers?.find(l=>l.id===layer.id);if(old){layer.visible=old.visible;layer.input.checked=layer.visible;}}
@@ -174,12 +181,14 @@ async function loadBuffer(buffer,name){
     setView(saved?.view||'perspective',false);
     if(saved?.camera?.length===3&&saved?.target?.length===3){camera.position.fromArray(saved.camera);controls.target.fromArray(saved.target);controls.update();}
     const box=modelBounds(false);grid.position.copy(box.getCenter(new THREE.Vector3()));grid.position.z=box.min.z-0.015;
+    cameraPreview.setModel(key.slice('laser-space:'.length));
     $('loading').hidden=true;document.body.dataset.loaded='true';document.body.dataset.unitScale=String(metresPerUnit);return true;
   }catch(error){if(request===loadId)showError('模型加载失败：'+error.message+'。可点击“打开新版模型”重新选择 .3dm 文件。');console.error(error);return false;}
 }
 function disposeModel(object){if(!object)return;scene.remove(object);const geos=new Set(),mats=new Set();object.traverse(o=>{if(o.geometry)geos.add(o.geometry);for(const m of (Array.isArray(o.material)?o.material:[o.material]))if(m)mats.add(m);});geos.forEach(g=>g.dispose());mats.forEach(m=>m.dispose());}
 
 function toggleWalk(enabled=!walk){
+  cameraPreview.stop();
   walk=enabled;$('walk').classList.toggle('active',walk);$('walk').textContent=walk?'退出漫游':'进入空间';
   $('walk').setAttribute('aria-pressed',String(walk));controls.enablePan=!walk;controls.enableZoom=!walk;
   if(walk){
@@ -210,11 +219,22 @@ window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addE
 renderer.setAnimationLoop(()=>{
   const dt=Math.min(clock.getDelta(),0.05);
   if(walk&&keys.size){const forward=controls.target.clone().sub(camera.position);forward.z=0;forward.normalize();const right=forward.clone().cross(new THREE.Vector3(0,0,1));const move=new THREE.Vector3();if(keys.has('w'))move.add(forward);if(keys.has('s'))move.sub(forward);if(keys.has('d'))move.add(right);if(keys.has('a'))move.sub(right);if(keys.has('e'))move.z+=1;if(keys.has('q'))move.z-=1;move.normalize().multiplyScalar(dt*2);camera.position.add(move);controls.target.add(move);}
-  controls.update();renderer.render(scene,camera);
+  controls.update();
+  const virtualCamera=cameraPreview.camera;
+  if(virtualCamera){
+    const width=mount.clientWidth,height=mount.clientHeight,w=Math.min(width,height*virtualCamera.aspect),h=w/virtualCamera.aspect;
+    const marker=items.find(o=>o.userData.attributes?.id===cameraPreview.hiddenMarkerId),visible=marker?.visible;
+    if(marker)marker.visible=false;
+    for(const mat of previewWallMaterials){mat.transparent=false;mat.opacity=1;mat.depthWrite=true;}
+    renderer.setScissorTest(false);renderer.setViewport(0,0,width,height);renderer.clear();
+    renderer.setViewport((width-w)/2,(height-h)/2,w,h);renderer.setScissor((width-w)/2,(height-h)/2,w,h);renderer.setScissorTest(true);
+    renderer.render(scene,virtualCamera);renderer.setScissorTest(false);if(marker)marker.visible=visible;
+    for(const mat of previewWallMaterials){mat.transparent=true;mat.opacity=.24;mat.depthWrite=false;}
+  }else{renderer.setScissorTest(false);renderer.setViewport(0,0,mount.clientWidth,mount.clientHeight);renderer.render(scene,camera);}
 });
 resize();
 async function startup(){
-  try{const config=await fetch(new URL('project.json',document.baseURI)).then(r=>{if(!r.ok)throw new Error('读取项目配置失败');return r.json();});const response=await fetch(new URL(config.model.url,document.baseURI));if(!response.ok)throw new Error('读取模型失败：HTTP '+response.status);await loadBuffer(await response.arrayBuffer(),config.model.name);}
+  try{const config=await fetch(new URL('project.json',document.baseURI),{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('读取项目配置失败');return r.json();});const modelUrl=new URL(config.model.url,document.baseURI);if(config.model.revision)modelUrl.searchParams.set('v',config.model.revision);const response=await fetch(modelUrl);if(!response.ok)throw new Error('读取模型失败：HTTP '+response.status);await loadBuffer(await response.arrayBuffer(),config.model.name);}
   catch(e){showError(e.message);}
 }
 startup();

@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/copy-rhino.mjs && vite --host 127.0.0.1",
-    "build": "node scripts/copy-rhino.mjs && vite build",
+    "dev": "node scripts/prepare-model.mjs && node scripts/copy-rhino.mjs && vite --host 127.0.0.1",
+    "build": "node scripts/prepare-model.mjs && node scripts/copy-rhino.mjs && vite build",
+    "model:prepare": "node scripts/prepare-model.mjs",
+    "model:package": "node scripts/package-model-release.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {

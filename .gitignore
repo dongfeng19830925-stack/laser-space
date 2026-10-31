@@ -5,3 +5,6 @@ dist/
 public/rhino/
 
 .DS_Store
+
+# Restored from verified GitHub Release parts before dev/build.
+/public/models/space.3dm

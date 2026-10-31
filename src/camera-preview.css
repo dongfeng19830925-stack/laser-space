@@ -1,0 +1,10 @@
+.camera-preview{position:absolute;z-index:4;top:76px;left:20px;max-width:calc(100% - 40px);width:330px;background:#142229f2;border:1px solid #416459;border-radius:7px;color:#d2e9df;font:12px system-ui,sans-serif}
+.camera-preview>summary{padding:11px 12px;cursor:pointer}.camera-preview>summary span{float:right;color:#92ada2;font-size:10px}
+.camera-preview-body{padding:0 12px 12px;max-height:calc(60dvh - 100px);overflow-y:auto}.camera-preview-body label{display:block;margin:9px 0;color:#a7c2b9;font-size:11px}
+.camera-preview-body select{display:block;width:100%;margin-top:5px;background:#1e343b;color:#e0f0e8;border:1px solid #3d5a52;border-radius:4px;padding:7px;font:12px system-ui,sans-serif}
+.camera-preview-fields{display:flex;gap:8px}.camera-preview-fields label{flex:1;min-width:0}.camera-preview-body output{float:right}.camera-preview-body input[type=range]{display:block;width:100%;margin-top:10px;accent-color:#72d9be}
+.camera-preview-body p{white-space:pre-line;line-height:1.7;font-size:11px;margin:10px 0}.camera-preview-body .camera-preview-assumptions{color:#b1ac91;border-top:1px solid #355047;padding-top:10px;font-size:10px}
+.camera-preview-actions{display:flex;gap:8px}.camera-preview-actions button{border:1px solid #4c7565;border-radius:4px;background:#2b5545;color:#d9f6e9;padding:8px 10px;font:12px system-ui,sans-serif;cursor:pointer}.camera-preview-actions button:disabled{opacity:.45;cursor:wait}
+.camera-preview [hidden]{display:none}.camera-preview select:focus-visible,.camera-preview button:focus-visible,.camera-preview summary:focus-visible{outline:2px solid #91e5c6;outline-offset:2px}
+.capture-budget{border-top:1px solid #355047;margin-top:12px;padding-top:10px}.capture-budget>summary{cursor:pointer;color:#b4d6c7}.capture-budget input[type=number]{display:block;width:100%;margin-top:5px;padding:7px;background:#1e343b;color:#e0f0e8;border:1px solid #3d5a52;border-radius:4px}.capture-budget .capture-budget-note{font-size:10px;color:#b1ac91}
+@media(max-width:700px){.camera-preview{top:68px;left:12px;max-width:calc(100% - 24px)}.camera-preview-body{max-height:calc(60dvh - 155px)}}

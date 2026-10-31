@@ -6,8 +6,24 @@
   <meta name="theme-color" content="#11151b" />
   <meta name="description" content="融空间激光空间真实尺寸三维模型，支持 Rhino 模型更新、图层查看与空间漫游。" />
   <title>激光空间 · 三维工作台</title>
+  <link rel="stylesheet" href="./src/project-nav.css" />
 </head>
-<body>
+<body class="project-model">
+  <nav class="project-switcher" aria-label="项目模式">
+    <span class="project-brand">激光空间 / 项目工作台</span>
+    <a href="./" aria-current="page">真实空间模型</a>
+    <a href="./laser-room/">激光房间模拟</a>
+    <details class="project-info">
+      <summary>模型资料</summary>
+      <div class="project-info-panel">
+        <strong>真实空间模型</strong>
+        <p>读取你提供的 Rhino 原工程，按源文件单位换算真实尺寸。支持图层显隐、物体尺寸与高程查看、空间漫游、新版模型预览和查看配置导出。</p>
+        <strong>激光房间模拟</strong>
+        <p>12框激光阵列、四人行走、几何碰线提示与摄像头画面预演。</p>
+        <p class="project-boundary">模拟阵列尚未与原模型定位对齐；摄像头位置与观察目标待按现场布置逐台校正。</p>
+      </div>
+    </details>
+  </nav>
   <header class="topbar">
     <a class="brand" href="./" aria-label="激光空间主页"><span class="brand-mark">L</span><span>激光空间<small>三维工作台</small></span></a>
     <div class="model-title"><span class="status-dot"></span><span id="model-name">正在读取模型</span><span class="tag">1∶1</span></div>
@@ -21,10 +37,10 @@
     <aside class="sidebar">
       <div class="section-heading"><span>模型图层</span><span id="layer-count" class="muted">—</span></div>
       <div class="presets" aria-label="显示方案">
-        <button data-preset="space" class="preset active" aria-pressed="true">空间</button>
+        <button data-preset="space" class="preset" aria-pressed="false">空间</button>
         <button data-preset="structure" class="preset" aria-pressed="false">结构</button>
         <button data-preset="plan" class="preset" aria-pressed="false">布置</button>
-        <button data-preset="all" class="preset" aria-pressed="false">全部</button>
+        <button data-preset="all" class="preset active" aria-pressed="true">全部</button>
       </div>
       <div id="layer-list" class="layer-list"></div>
       <div class="sidebar-bottom">
@@ -57,7 +73,7 @@
       <div class="separator"></div>
       <div class="section-heading">物体信息</div>
       <div id="selection" aria-live="polite"><div class="empty-icon">⌖</div><p class="empty-text">点击模型中的物体<br />查看图层、尺寸与高度</p></div>
-      <div class="inspector-note"><span class="note-dot"></span><p>当前显示已提供的空间与设备箱模型。激光器和光束效果待后续模型更新。</p></div>
+      <div class="inspector-note"><span class="note-dot"></span><p>当前为 v2.0 搭建场景，单位毫米并换算为米。“现场摄像头预演”使用模型实际机位，按地面85°、墙面120°参考镜头计算朝向。光心、镜头畸变及有效视场仍待实拍标定；“未来增加的摄像机”可按图层单独隐藏。</p></div>
     </aside>
   </main>
   <div id="toast" role="status" aria-live="polite" hidden></div>
