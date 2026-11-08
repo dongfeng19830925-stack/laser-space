@@ -1,0 +1,11 @@
+{
+  "name": "laser-panel",
+  "private": true,
+  "dependencies": {
+    "mqtt": "5.14.1"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "show": "node show.mjs"
+  }
+}

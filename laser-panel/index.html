@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>激光点阵控制</title>
+  <link rel="stylesheet" href="/panel.css">
+  <script type="module" src="/panel.js"></script>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">LASER ROOM <span>／</span> 发射端 · 192.168.10.51</div>
+      <h1>激光点阵控制</h1>
+      <p>12 × 12 点位 · 点击循环切换：关闭 → 红 → 绿 → 关闭</p>
+    </header>
+
+    <section class="panel" aria-label="激光点阵">
+      <div class="toolbar">
+        <div class="status" id="status" role="status">正在加载控制面板…</div>
+        <div class="presets" aria-label="全局操作">
+          <button type="button" data-preset="1" disabled>全红</button>
+          <button type="button" data-preset="2" disabled>全绿</button>
+          <button type="button" data-preset="0" disabled>全关</button>
+        </div>
+      </div>
+      <div class="grid" id="grid" aria-label="144 个激光点位"></div>
+      <footer>
+        <div class="legend"><span class="off">关闭</span><span class="red">红</span><span class="green">绿</span><span class="unknown">未知</span></div>
+        <span>面板显示最近一次发布的状态，实际灯光以现场为准</span>
+      </footer>
+    </section>
+    <p class="note">请在游戏停止、现场确认光路内无人后使用。控制器每次接收整张矩阵。</p>
+  </main>
+</body>
+</html>
