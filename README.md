@@ -25,7 +25,7 @@
 
 ## 硬件实施记录
 
-- [巴别塔 · ESP32 双路继电器](docs/hardware/babel-tower-relay.md)：GPIO14→25、GPIO27→26，按下独立吸合 15 秒，含接线、烧录结果及现场验收清单；固件单独保存在私有仓库。
+- [巴别塔 · ESP32 双路继电器](docs/hardware/babel-tower-relay.md)：GPIO27→25、GPIO14→26，继电器低电平吸合 15 秒，两路独立，含接线、烧录结果及现场验收清单；固件单独保存在私有仓库。
 
 ## 本地启动流程
 
